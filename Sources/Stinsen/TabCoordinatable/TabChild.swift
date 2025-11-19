@@ -23,7 +23,9 @@ public class TabChild: ObservableObject {
             allItems[activeTab].onTapped(oldValue == activeTab)            
             guard oldValue != activeTab else { return }
             let newItem = allItems[activeTab]
-            self.activeItem = newItem
+            Task { @MainActor in
+                self.activeItem = newItem
+            }
         }
     }
     

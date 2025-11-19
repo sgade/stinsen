@@ -2,7 +2,7 @@
   <img src="./Images/wordmark.svg" alt="Stinsen">
 </p>
 
-[![Language](https://img.shields.io/static/v1.svg?label=language&message=Swift%205&color=FA7343&logo=swift&style=flat-square)](https://swift.org)
+[![Language](https://img.shields.io/static/v1.svg?label=language&message=Swift%206.2&color=FA7343&logo=swift&style=flat-square)](https://swift.org)
 [![Platform](https://img.shields.io/static/v1.svg?label=platforms&message=iOS%20|%20tvOS%20|%20watchOS%20|%20macOS&logo=apple&style=flat-square)](https://apple.com)
 [![License](https://img.shields.io/cocoapods/l/Crossroad.svg?style=flat-square)](https://github.com/rundfunk47/stinsen/blob/main/LICENSE)
 
@@ -275,23 +275,10 @@ _Stinsen_  comes with a couple of _Coordinatables_ for standard SwiftUI views. I
 
 # Installation 💾
 
-_Stinsen_ supports two ways of installation, Cocoapods and SPM. 
-
-## SPM
+_Stinsen_ can be installed using the Swift Package Manager.
 
 Open Xcode and your project, click `File / Swift Packages / Add package dependency...` .  In the textfield "_Enter package repository URL_", write `https://github.com/rundfunk47/stinsen` and press _Next_ twice
 
-## Cocoapods
-
-Create a `Podfile` in your app's root directory. Add
-```
-# Podfile
-use_frameworks!
-
-target 'YOUR_TARGET_NAME' do
-    pod 'Stinsen'
-end
-```
 # Known issues and bugs 🐛
 
 * _Stinsen_ does not support `DoubleColumnNavigationViewStyle`. The reason for this is that it does not work as expected due to issues with `isActive` in SwiftUI. _Workaround:_ Use UIViewRepresentable or create your own implementation.

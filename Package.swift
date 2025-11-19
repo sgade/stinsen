@@ -1,4 +1,4 @@
-// swift-tools-version:5.3
+// swift-tools-version:6.2
 
 import PackageDescription
 
@@ -14,6 +14,11 @@ let package = Package(
         .library(name: "Stinsen", targets: ["Stinsen"])
     ],
     targets: [
-        .target(name: "Stinsen")
+        .target(
+            name: "Stinsen",
+            swiftSettings: [
+                .defaultIsolation(MainActor.self)
+            ]
+        )
     ]
 )
