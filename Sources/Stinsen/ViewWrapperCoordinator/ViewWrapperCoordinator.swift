@@ -3,7 +3,7 @@ import SwiftUI
 
 /// The NavigationViewCoordinator is used to represent a coordinator with a NavigationView
 open class ViewWrapperCoordinator<T: Coordinatable, V: View>: Coordinatable {
-    public func dismissChild<T: Coordinatable>(coordinator: T, action: (() -> Void)?) {
+    public func dismissChild<Child: Coordinatable>(coordinator: Child, action: (() -> Void)?) {
         guard let parent = self.parent else {
             assertionFailure("Can not dismiss a coordinator since no coordinator is presented.")
             return
