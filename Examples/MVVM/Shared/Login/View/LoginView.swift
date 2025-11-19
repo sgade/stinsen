@@ -15,10 +15,12 @@ struct LoginView<ViewModel: LoginViewModel>: View {
     var body: some View {
         VStack {
             TextField("Username", text: $viewModel.username)
-                .textInputAutocapitalization(.never)
                 .textContentType(.username)
                 .disableAutocorrection(true)
+            #if !os(macOS)
+                .textInputAutocapitalization(.never)
                 .keyboardType(.emailAddress)
+            #endif
             SecureField("Password", text: $viewModel.password)
             if let error = error {
                 Text(error.localizedDescription)

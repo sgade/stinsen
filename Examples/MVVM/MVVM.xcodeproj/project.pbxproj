@@ -7,6 +7,22 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		45784A1F2ECE4C05004EA9F1 /* MockLoginViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBE6321F272AAD0200E18E9C /* MockLoginViewModel.swift */; };
+		45784A202ECE4C05004EA9F1 /* LoginViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBE63203272AA43300E18E9C /* LoginViewModel.swift */; };
+		45784A212ECE4C05004EA9F1 /* MockLoginCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBE63229272AB8E100E18E9C /* MockLoginCoordinator.swift */; };
+		45784A222ECE4C05004EA9F1 /* DefaultLoginViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBE63216272AA69F00E18E9C /* DefaultLoginViewModel.swift */; };
+		45784A232ECE4C05004EA9F1 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBE63201272AA42000E18E9C /* LoginView.swift */; };
+		45784A242ECE4C05004EA9F1 /* DefaultLoginCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBE63209272AA46200E18E9C /* DefaultLoginCoordinator.swift */; };
+		45784A252ECE4C05004EA9F1 /* LoginCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBE63221272AAF5200E18E9C /* LoginCoordinator.swift */; };
+		45784A272ECE4C15004EA9F1 /* Stinsen in Frameworks */ = {isa = PBXBuildFile; productRef = 45784A262ECE4C15004EA9F1 /* Stinsen */; };
+		45784A292ECE4C1B004EA9F1 /* Stinsen in Frameworks */ = {isa = PBXBuildFile; productRef = 45784A282ECE4C1B004EA9F1 /* Stinsen */; };
+		45784A2A2ECE4C34004EA9F1 /* MockAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBE6321B272AA73F00E18E9C /* MockAPI.swift */; };
+		45784A2B2ECE4C34004EA9F1 /* DefaultAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBE6321D272AA76E00E18E9C /* DefaultAPI.swift */; };
+		45784A2C2ECE4C34004EA9F1 /* API.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBE63219272AA73800E18E9C /* API.swift */; };
+		45784A2D2ECE4C3B004EA9F1 /* DefaultAuthenticatedCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBE63225272AAF9C00E18E9C /* DefaultAuthenticatedCoordinator.swift */; };
+		45784A2E2ECE4C3B004EA9F1 /* MockAuthenticatedCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBE63227272AAFA700E18E9C /* MockAuthenticatedCoordinator.swift */; };
+		45784A2F2ECE4C3B004EA9F1 /* AuthenticatedCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBE63207272AA45200E18E9C /* AuthenticatedCoordinator.swift */; };
+		45784A302ECE4C3B004EA9F1 /* AuthenticatedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBE63205272AA43E00E18E9C /* AuthenticatedView.swift */; };
 		EBE631EC272AA38600E18E9C /* MVVMApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBE631DC272AA38500E18E9C /* MVVMApp.swift */; };
 		EBE631ED272AA38600E18E9C /* MVVMApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBE631DC272AA38500E18E9C /* MVVMApp.swift */; };
 		EBE631F0272AA38600E18E9C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = EBE631DE272AA38600E18E9C /* Assets.xcassets */; };
@@ -68,6 +84,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				45784A292ECE4C1B004EA9F1 /* Stinsen in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -75,6 +92,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				45784A272ECE4C15004EA9F1 /* Stinsen in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -245,6 +263,7 @@
 			);
 			name = "MVVM (iOS)";
 			packageProductDependencies = (
+				45784A282ECE4C1B004EA9F1 /* Stinsen */,
 			);
 			productName = "MVVM (iOS)";
 			productReference = EBE631E3272AA38600E18E9C /* MVVM.app */;
@@ -264,6 +283,7 @@
 			);
 			name = "MVVM (macOS)";
 			packageProductDependencies = (
+				45784A262ECE4C15004EA9F1 /* Stinsen */,
 			);
 			productName = "MVVM (macOS)";
 			productReference = EBE631E9272AA38600E18E9C /* MVVM.app */;
@@ -295,7 +315,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1310;
-				LastUpgradeCheck = 1310;
+				LastUpgradeCheck = 2610;
 				TargetAttributes = {
 					EBE631E2272AA38600E18E9C = {
 						CreatedOnToolsVersion = 13.1;
@@ -382,6 +402,20 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				45784A1F2ECE4C05004EA9F1 /* MockLoginViewModel.swift in Sources */,
+				45784A202ECE4C05004EA9F1 /* LoginViewModel.swift in Sources */,
+				45784A212ECE4C05004EA9F1 /* MockLoginCoordinator.swift in Sources */,
+				45784A2A2ECE4C34004EA9F1 /* MockAPI.swift in Sources */,
+				45784A2B2ECE4C34004EA9F1 /* DefaultAPI.swift in Sources */,
+				45784A2C2ECE4C34004EA9F1 /* API.swift in Sources */,
+				45784A2D2ECE4C3B004EA9F1 /* DefaultAuthenticatedCoordinator.swift in Sources */,
+				45784A2E2ECE4C3B004EA9F1 /* MockAuthenticatedCoordinator.swift in Sources */,
+				45784A2F2ECE4C3B004EA9F1 /* AuthenticatedCoordinator.swift in Sources */,
+				45784A302ECE4C3B004EA9F1 /* AuthenticatedView.swift in Sources */,
+				45784A222ECE4C05004EA9F1 /* DefaultLoginViewModel.swift in Sources */,
+				45784A232ECE4C05004EA9F1 /* LoginView.swift in Sources */,
+				45784A242ECE4C05004EA9F1 /* DefaultLoginCoordinator.swift in Sources */,
+				45784A252ECE4C05004EA9F1 /* LoginCoordinator.swift in Sources */,
 				EBE631ED272AA38600E18E9C /* MVVMApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -439,9 +473,11 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -459,6 +495,7 @@
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
@@ -498,9 +535,11 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -511,6 +550,7 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 			};
@@ -584,7 +624,10 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				ENABLE_APP_SANDBOX = YES;
 				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -610,7 +653,10 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				ENABLE_APP_SANDBOX = YES;
 				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -716,6 +762,17 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		45784A262ECE4C15004EA9F1 /* Stinsen */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = Stinsen;
+		};
+		45784A282ECE4C1B004EA9F1 /* Stinsen */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = Stinsen;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = EBE631D7272AA38400E18E9C /* Project object */;
 }
