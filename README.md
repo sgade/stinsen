@@ -289,6 +289,33 @@ final class TodosCoordinator: @MainActor NavigationCoordinatable {
 }
 ```
 
+# Navigation requests that Stinsen cannot do 🚦
+
+Stinsen never stops your app. If Stinsen cannot do a navigation request, it ignores the request and logs a fault with the subsystem `Stinsen`. Examples are:
+
+* `dismissCoordinator()` on a coordinator that no coordinator presents, for example the root coordinator of a tab.
+* `focusFirst(_:)` on a `TabCoordinatable` with a route that is not a tab.
+* An initial route that needs an input, without the input.
+
+Check before you navigate, where the result depends on where the user is:
+
+```swift
+RoundedButton("Close") {
+    router.dismissCoordinator()
+}
+.disabled(!router.canDismissCoordinator)
+```
+
+To see these faults in your crash reporting, or to stop on them in your Debug builds, set a handler:
+
+```swift
+StinsenMisuse.handler = { misuse in
+    assertionFailure(misuse.description)
+}
+```
+
+The other faults come from code errors, thus the compiler finds many of them. For example, `root(\.route)` does not compile for a route that needs an input.
+
 # Known issues and bugs 🐛
 
 * _Stinsen_ does not have a coordinator for `NavigationSplitView`. _Workaround:_ Create your own `Coordinatable`.
@@ -314,6 +341,13 @@ Stinsen v3 uses the SwiftUI `NavigationStack` instead of `NavigationView`. The r
 * A deep link that pushes many screens now updates the navigation path in one step.
 * A modal route that shows a view puts the view in its own `NavigationStack`. As before, the navigation bar of its first screen is hidden.
 * `TabChild` uses Observation and is not an `ObservableObject` anymore.
+* Stinsen does not stop the app for a navigation request that it cannot do, for example `dismissCoordinator()` on a coordinator that no coordinator presents. It ignores the request, logs a fault with the subsystem `Stinsen`, and calls `StinsenMisuse.handler`. See [Navigation requests that Stinsen cannot do](#navigation-requests-that-stinsen-cannot-do-).
+* `root(_:)` without an input is only available for routes without an input. For a route with an input, use `root(_:_:)`. To check the root without changing it, use `isRoot(_:)` or `hasRoot(_:)`.
+* `dismissCoordinator(_:)` returns `false` if no coordinator can dismiss the coordinator. Use `canDismissCoordinator` to check before, for example to disable a close button.
+* `ChildDismissable` changed. If you implement your own `Coordinatable`:
+  * `dismissChild(coordinator:action:)` returns `Bool`. Return `false` if the coordinator cannot dismiss the child.
+  * Implement the new requirement `canDismissChild(_:)`. It returns `true` if `dismissChild(coordinator:action:)` would dismiss the child.
+* A router keeps its coordinator alive, thus a router is always safe to use. `@RouterObject` holds its router weakly.
 
 # Updating from Stinsen v1 🚀
 

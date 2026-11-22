@@ -28,10 +28,7 @@ struct ScreenView<T: NavigationCoordinatable>: View {
     }
 
     private var router: NavigationRouter<T.RouterStoreType> {
-        guard let router = stack.router(for: index) else {
-            preconditionFailure("The coordinator of a visible screen must exist.")
-        }
-        return router
+        stack.router(for: index, coordinator: coordinator)
     }
 
     private var customizedContent: AnyView {

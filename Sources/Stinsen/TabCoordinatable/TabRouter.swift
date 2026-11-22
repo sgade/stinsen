@@ -2,14 +2,11 @@ import SwiftUI
 import Foundation
 
 public class TabRouter<T>: Routable {
-    public var coordinator: T {
-        _coordinator.value as! T
-    }
-    
-    private var _coordinator: WeakRef<AnyObject>
-    
+    /// The coordinator of the router. The router keeps it alive, so that a router is always safe to use.
+    public let coordinator: T
+
     public init(coordinator: T) {
-        self._coordinator = WeakRef(value: coordinator as AnyObject)
+        self.coordinator = coordinator
     }
 }
 

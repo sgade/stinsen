@@ -22,11 +22,17 @@ public struct Transition<T: NavigationCoordinatable, U: RouteType, Input, Output
     let closure: ((T) -> ((Input) -> Output))
     
     func using(coordinator: Any, input: Any) -> ViewPresentable {
-        if Input.self == Void.self {
-            return closure(coordinator as! T)(() as! Input)
-        } else {
-            return closure(coordinator as! T)(input as! Input)
+        guard let coordinator = coordinator as? T else {
+            reportMisuse("The route of \(T.self) got a coordinator of type \(Swift.type(of: coordinator)). Stinsen shows an empty view.")
+            return AnyView(EmptyView())
         }
+
+        guard let input = (input as? Input) ?? (() as? Input) else {
+            reportMisuse("The initial route of \(T.self) needs an input of type \(Input.self). Give it to CoordinatorStack(initial:_:). Stinsen shows an empty view.")
+            return AnyView(EmptyView())
+        }
+
+        return closure(coordinator)(input)
     }
 }
 

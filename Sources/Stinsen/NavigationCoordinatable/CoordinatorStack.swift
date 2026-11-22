@@ -36,7 +36,8 @@ public class AnyCoordinatorStack {
     @ObservationIgnored private var pendingDismissals: [() -> Void] = []
 
     /// The routers of the screens in this stack, keyed by the index of the screen.
-    @ObservationIgnored var routers: [Int: AnyObject] = [:]
+    /// A router keeps its coordinator alive, so the stack holds the routers weakly.
+    @ObservationIgnored var routers: [Int: WeakRef<AnyObject>] = [:]
 
     @ObservationIgnored weak var parent: ChildDismissable?
 
@@ -87,17 +88,17 @@ public class AnyCoordinatorStack {
     /// - Parameter item: The item that the screen shows. Use `nil` for the root.
     /// - Parameter appliesCustomize: If `true`, the view adds the `customize` modifications of the coordinator.
     func screen(index: Int, item: NavigationStackItem?, appliesCustomize: Bool) -> AnyView {
-        fatalError("CoordinatorStack must override screen(index:item:appliesCustomize:)")
+        AnyView(EmptyView())
     }
 
     /// Adds the `customize` modifications of the coordinator to `view`.
     func customize(_ view: AnyView) -> AnyView {
-        fatalError("CoordinatorStack must override customize(_:)")
+        view
     }
 
     /// Adds the router of the screen at `routerID` to the environment of `view`.
     func withRouter(_ view: AnyView, routerID: Int) -> AnyView {
-        fatalError("CoordinatorStack must override withRouter(_:routerID:)")
+        view
     }
 }
 
@@ -114,19 +115,24 @@ public final class CoordinatorStack<T: NavigationCoordinatable>: AnyCoordinatorS
         super.init()
     }
 
-    /// Returns the router of the screen at `id`. Stinsen keeps one router for each screen.
+    /// Returns the router of the screen at `id`, or `nil` if the coordinator does not exist anymore.
     func router(for id: Int) -> NavigationRouter<T.RouterStoreType>? {
-        if let router = routers[id] as? NavigationRouter<T.RouterStoreType> {
-            return router
-        }
-
         guard let coordinator else {
             return nil
         }
 
+        return router(for: id, coordinator: coordinator)
+    }
+
+    /// Returns the router of the screen at `id`. Stinsen keeps one router for each visible screen.
+    func router(for id: Int, coordinator: T) -> NavigationRouter<T.RouterStoreType> {
+        if let router = routers[id]?.value as? NavigationRouter<T.RouterStoreType> {
+            return router
+        }
+
         let router = NavigationRouter(id: id, coordinator: coordinator.routerStorable)
         RouterStore.shared.store(router: router)
-        routers[id] = router
+        routers[id] = WeakRef(value: router)
         return router
     }
 

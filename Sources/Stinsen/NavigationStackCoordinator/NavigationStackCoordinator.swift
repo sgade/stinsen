@@ -21,14 +21,14 @@ public class NavigationStackCoordinator<T: Coordinatable>: ViewWrapperCoordinato
         nil
     }
 
-    @available(*, unavailable)
+    @available(*, unavailable, message: "The view of a NavigationStackCoordinator cannot be customized.")
     public override init(_ childCoordinator: T, _ view: @escaping (AnyView) -> AnyView) {
-        fatalError("view cannot be customized")
+        super.init(childCoordinator, view)
     }
 
-    @available(*, unavailable)
+    @available(*, unavailable, message: "The view of a NavigationStackCoordinator cannot be customized.")
     public override init(_ childCoordinator: T, _ view: @escaping (any Coordinatable) -> (AnyView) -> AnyView) {
-        fatalError("view cannot be customized")
+        super.init(childCoordinator, view)
     }
 }
 

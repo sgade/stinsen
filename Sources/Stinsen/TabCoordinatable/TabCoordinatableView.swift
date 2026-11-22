@@ -39,7 +39,11 @@ struct TabCoordinatableView<T: TabCoordinatable, U: View>: View {
     }
 
     private func tabItem(at offset: Int) -> AnyView {
-        coordinator.child.allItems[offset].tabItem(offset == child.activeTab)
+        guard let item = coordinator.child.allItems?[safe: offset] else {
+            return AnyView(EmptyView())
+        }
+
+        return item.tabItem(offset == child.activeTab)
     }
 
     init(paths: [AnyKeyPath], coordinator: T, customize: @escaping (AnyView) -> U) {
@@ -54,7 +58,7 @@ struct TabCoordinatableView<T: TabCoordinatable, U: View>: View {
             coordinator.setupAllTabs()
         }
 
-        self.views = coordinator.child.allItems.map {
+        self.views = (coordinator.child.allItems ?? []).map {
             $0.presentable.view()
         }
     }

@@ -3,13 +3,18 @@ import SwiftUI
 
 /// The ViewWrapperCoordinator puts the view of a child coordinator in a custom view.
 open class ViewWrapperCoordinator<T: Coordinatable, V: View>: @MainActor Coordinatable {
-    public func dismissChild<Child: Coordinatable>(coordinator: Child, action: (() -> Void)?) {
+    /// The wrapper dismisses its child by asking its own parent to dismiss the wrapper.
+    @discardableResult public func dismissChild<Child: Coordinatable>(coordinator: Child, action: (() -> Void)?) -> Bool {
         guard let parent = self.parent else {
-            assertionFailure("Can not dismiss a coordinator since no coordinator is presented.")
-            return
+            reportMisuse("Cannot dismiss \(type(of: self)), because no coordinator presents it.")
+            return false
         }
-        
-        parent.dismissChild(coordinator: self, action: action)
+
+        return parent.dismissChild(coordinator: self, action: action)
+    }
+
+    public func canDismissChild<Child: Coordinatable>(_ coordinator: Child) -> Bool {
+        parent?.canDismissChild(self) ?? false
     }
 
     public weak var parent: ChildDismissable?

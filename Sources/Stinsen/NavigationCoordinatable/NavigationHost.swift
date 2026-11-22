@@ -122,10 +122,9 @@ enum CoordinatorPath {
         let current = entries(stack: stack, anchor: anchor)
 
         guard newPath.count < current.count else {
-            assert(
-                newPath.count == current.count,
-                "Stinsen owns the navigation path. Use the router to push routes, not NavigationLink(value:)."
-            )
+            if newPath.count > current.count {
+                reportMisuse("Stinsen owns the navigation path. Use the router to push routes, not NavigationLink(value:).")
+            }
             return
         }
 

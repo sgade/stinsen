@@ -17,13 +17,21 @@ public class TabChild {
 
     var activeItem: TabChildItem?
 
-    @ObservationIgnored var allItems: [TabChildItem]!
+    @ObservationIgnored var allItems: [TabChildItem]?
 
     public var activeTab: Int {
         didSet {
-            allItems[activeTab].onTapped(oldValue == activeTab)
+            guard let item = allItems?[safe: activeTab] else {
+                // Before the tabs show, Stinsen cannot check the index. TabView ignores an unknown tab.
+                if let allItems {
+                    reportMisuse("Tab \(activeTab) does not exist. There are \(allItems.count) tabs.")
+                }
+                return
+            }
+
+            item.onTapped(oldValue == activeTab)
             guard oldValue != activeTab else { return }
-            activeItem = allItems[activeTab]
+            activeItem = item
         }
     }
 

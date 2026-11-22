@@ -22,12 +22,15 @@ final class ParentCoordinator: @MainActor NavigationCoordinatable {
     @Route(.push) var screen = makeScreen
     @Route(.push) var child = makeChild
     @Route(.push) var wrappedChild = makeWrappedChild
+    @Root var numbered = makeScreen
+    @Root var childWithInput = makeChildWithInput
     @Route(.modal) var sheet = makeStart
     @Route(.fullScreen) var cover = makeStart
 
     func makeStart() -> Text { Text("Start") }
     func makeScreen(_ number: Int) -> Text { Text("Screen \(number)") }
     func makeChild() -> ChildCoordinator { ChildCoordinator() }
+    func makeChildWithInput(_ number: Int) -> ChildCoordinator { ChildCoordinator() }
     func makeWrappedChild() -> ViewWrapperCoordinator<ChildCoordinator, AnyView> {
         ViewWrapperCoordinator(ChildCoordinator()) { AnyView($0) }
     }

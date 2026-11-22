@@ -3,15 +3,14 @@ import SwiftUI
 
 public final class NavigationRouter<T>: Routable {
     public let id: Int
-    public var coordinator: T {
-        _coordinator.value as! T
-    }
-    
-    private var _coordinator: WeakRef<AnyObject>
-    
+
+    /// The coordinator of the router. The router keeps it alive, so that a router is always safe to use.
+    /// The coordinator holds its routers weakly, thus this does not make a retain cycle.
+    public let coordinator: T
+
     public init(id: Int, coordinator: T) {
         self.id = id
-        self._coordinator = WeakRef(value: coordinator as AnyObject)
+        self.coordinator = coordinator
     }
 }
 
@@ -31,7 +30,15 @@ public extension NavigationRouter where T: NavigationCoordinatable {
         coordinator.popLast(action)
     }
     
-    func dismissCoordinator(_ action: (() -> ())? = nil) {
+    /// `true` if a coordinator presents the coordinator of this router and can dismiss it.
+    var canDismissCoordinator: Bool {
+        coordinator.canDismissCoordinator
+    }
+
+    /// Asks the coordinator that presents the coordinator of this router to dismiss it.
+    ///
+    /// - Returns: `false` if no coordinator can dismiss it. Use `canDismissCoordinator` to check before.
+    @discardableResult func dismissCoordinator(_ action: (() -> ())? = nil) -> Bool {
         coordinator.dismissCoordinator(action)
     }
     
@@ -222,18 +229,6 @@ public extension NavigationRouter where T: NavigationCoordinatable {
     
     @discardableResult func root<Output: View>(
         _ route: KeyPath<T, Transition<T, RootSwitch, Void, Output>>
-    ) -> T {
-        return coordinator.root(route)
-    }
-    
-    @discardableResult func root<Input, Output: Coordinatable>(
-        _ route: KeyPath<T, Transition<T, RootSwitch, Input, Output>>
-    ) -> Output {
-        return coordinator.root(route)
-    }
-    
-    @discardableResult func root<Input, Output: View>(
-        _ route: KeyPath<T, Transition<T, RootSwitch, Input, Output>>
     ) -> T {
         return coordinator.root(route)
     }

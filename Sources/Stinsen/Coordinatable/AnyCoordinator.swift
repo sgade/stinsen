@@ -1,87 +1,61 @@
 import Foundation
 import SwiftUI
 
-// MARK: - Abstract base class
-fileprivate class _AnyCoordinatorBase: @MainActor Coordinatable {
-    func view() -> AnyView {
-        fatalError("must override")
-    }
-    
-    var parent: ChildDismissable? {
-        get {
-            fatalError("must override")
-        } set {
-            fatalError("must override")
-        }
-    }
-    
-    func dismissChild<T: Coordinatable>(coordinator: T, action: (() -> Void)?) {
-        fatalError("must override")
-    }
-    
-    var id: String {
-        fatalError("must override")
-    }
-    
-    init() {
-        guard type(of: self) != _AnyCoordinatorBase.self else {
-            fatalError("_AnyCoordinatorBase instances can not be created; create a subclass instance instead")
-        }
-    }
-}
-
-// MARK: - Box container class
-fileprivate final class _AnyCoordinatorBox<Base: Coordinatable>: _AnyCoordinatorBase {
-    var base: Base
-    
-    init(_ base: Base) { self.base = base }
-    
-    override func view() -> AnyView {
-        self.base.view()
-    }
-    
-    override var parent: ChildDismissable? {
-        get {
-            base.parent
-        } set {
-            base.parent = newValue
-        }
-    }
-    
-    override func dismissChild<T: Coordinatable>(coordinator: T, action: (() -> Void)?) {
-        base.dismissChild(coordinator: coordinator, action: action)
-    }
-    
-    override var id: String {
-        base.id
-    }
-}
-
-// MARK: - _AnyCoordinator Wrapper
+/// A type-erased coordinator.
 public final class AnyCoordinator: @MainActor Coordinatable {
+    private let makeView: () -> AnyView
+    private let getParent: () -> ChildDismissable?
+    private let setParent: (ChildDismissable?) -> Void
+    private let dismissChildCoordinator: (any Coordinatable, (() -> Void)?) -> Bool
+    private let canDismissChildCoordinator: (any Coordinatable) -> Bool
+    private let getID: () -> String
+
     public var parent: ChildDismissable? {
         get {
-            box.parent
+            getParent()
         } set {
-            box.parent = newValue
+            setParent(newValue)
         }
     }
-    
-    public func dismissChild<T: Coordinatable>(coordinator: T, action: (() -> Void)?) {
-        box.dismissChild(coordinator: coordinator, action: action)
-    }
-    
-    public func view() -> AnyView {
-        box.view()
-    }
-    
-    public var id: String {
-        box.id
+
+    @discardableResult public func dismissChild<T: Coordinatable>(coordinator: T, action: (() -> Void)?) -> Bool {
+        dismissChildCoordinator(coordinator, action)
     }
 
-    private let box: _AnyCoordinatorBase
+    public func canDismissChild<T: Coordinatable>(_ coordinator: T) -> Bool {
+        canDismissChildCoordinator(coordinator)
+    }
+
+    public func view() -> AnyView {
+        makeView()
+    }
+
+    public var id: String {
+        getID()
+    }
 
     public init<Base: Coordinatable>(_ base: Base) {
-        box = _AnyCoordinatorBox(base)
+        makeView = { base.view() }
+        getParent = { base.parent }
+        setParent = { base.parent = $0 }
+        dismissChildCoordinator = { coordinator, action in
+            Self.dismissChild(coordinator, of: base, action: action)
+        }
+        canDismissChildCoordinator = { coordinator in
+            Self.canDismiss(coordinator, of: base)
+        }
+        getID = { base.id }
+    }
+
+    private static func canDismiss<Base: Coordinatable, Child: Coordinatable>(_ child: Child, of base: Base) -> Bool {
+        base.canDismissChild(child)
+    }
+
+    private static func dismissChild<Base: Coordinatable, Child: Coordinatable>(
+        _ child: Child,
+        of base: Base,
+        action: (() -> Void)?
+    ) -> Bool {
+        base.dismissChild(coordinator: child, action: action)
     }
 }
