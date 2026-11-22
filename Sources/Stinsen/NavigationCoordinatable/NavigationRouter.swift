@@ -41,6 +41,11 @@ public extension NavigationRouter where T: NavigationCoordinatable {
     @discardableResult func dismissCoordinator(_ action: (() -> ())? = nil) -> Bool {
         coordinator.dismissCoordinator(action)
     }
+
+    @available(*, deprecated, renamed: "canDismissCoordinator")
+    var canDismiss: Bool {
+        canDismissCoordinator
+    }
     
     /**
      Appends a view to the navigation stack.

@@ -341,6 +341,7 @@ Stinsen v3 uses the SwiftUI `NavigationStack` instead of `NavigationView`. The r
 * A deep link that pushes many screens now updates the navigation path in one step.
 * A modal route that shows a view puts the view in its own `NavigationStack`. As before, the navigation bar of its first screen is hidden.
 * `TabChild` uses Observation and is not an `ObservableObject` anymore.
+* If you use Stinsen 2.0.14: `router.canDismiss` is now `router.canDismissCoordinator`. The property `ChildDismissable.canDismissChild` is now the function `canDismissChild(_:)`, which checks one child. `.modal(dismissible: false)` works as before.
 * Stinsen does not stop the app for a navigation request that it cannot do, for example `dismissCoordinator()` on a coordinator that no coordinator presents. It ignores the request, logs a fault with the subsystem `Stinsen`, and calls `StinsenMisuse.handler`. See [Navigation requests that Stinsen cannot do](#navigation-requests-that-stinsen-cannot-do-).
 * `root(_:)` without an input is only available for routes without an input. For a route with an input, use `root(_:_:)`. To check the root without changing it, use `isRoot(_:)` or `hasRoot(_:)`.
 * `dismissCoordinator(_:)` returns `false` if no coordinator can dismiss the coordinator. Use `canDismissCoordinator` to check before, for example to disable a close button.

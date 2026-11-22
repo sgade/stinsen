@@ -25,6 +25,7 @@ final class ParentCoordinator: @MainActor NavigationCoordinatable {
     @Root var numbered = makeScreen
     @Root var childWithInput = makeChildWithInput
     @Route(.modal) var sheet = makeStart
+    @Route(.modal(dismissible: false)) var lockedSheet = makeStart
     @Route(.fullScreen) var cover = makeStart
 
     func makeStart() -> Text { Text("Start") }
@@ -133,6 +134,21 @@ struct PathDerivationTests {
         #expect(path(of: parent).map(\.index) == [0])
         #expect(path(of: parent, anchor: 1).map(\.index) == [2])
         #expect(path(of: parent, anchor: 3).map(\.index) == [4])
+    }
+
+    @Test("A modal that the user cannot drag to dismiss also stops the path")
+    func nonDismissibleModal() {
+        let parent = ParentCoordinator()
+        parent.route(to: \.screen, 1)
+        parent.route(to: \.lockedSheet)
+        parent.route(to: \.screen, 2)
+
+        let type = parent.stack.value[1].presentationType
+        #expect(type == .modalNonDismissible)
+        #expect(type.isModal && !type.isModalDismissible)
+        #expect(PresentationType.modal(dismissible: true) == .modal)
+        #expect(path(of: parent).map(\.index) == [0])
+        #expect(path(of: parent, anchor: 1).map(\.index) == [2])
     }
 
     @Test("A deep link with focusFirst and route gives the full path at once")

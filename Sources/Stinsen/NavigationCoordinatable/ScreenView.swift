@@ -77,9 +77,9 @@ struct PresentationModifier: ViewModifier {
 
     /// macOS has no full-screen cover. There, a full-screen route shows as a sheet.
     #if os(macOS)
-    private static let sheetTypes: Set<PresentationType> = [.modal, .fullScreen]
+    private static let sheetTypes: Set<PresentationType> = [.modal, .modalNonDismissible, .fullScreen]
     #else
-    private static let sheetTypes: Set<PresentationType> = [.modal]
+    private static let sheetTypes: Set<PresentationType> = [.modal, .modalNonDismissible]
     #endif
 
     private func binding(for types: Set<PresentationType>) -> Binding<PresentedItem?> {
@@ -122,8 +122,14 @@ struct PresentationModifier: ViewModifier {
         stack.runPendingDismissals()
     }
 
-    @ViewBuilder
     private func presentedView(_ presented: PresentedItem) -> some View {
+        presentedContent(presented)
+            // A `.modal(dismissible: false)` route blocks the drag-to-dismiss gesture.
+            .interactiveDismissDisabled(!presented.item.presentationType.isModalDismissible)
+    }
+
+    @ViewBuilder
+    private func presentedContent(_ presented: PresentedItem) -> some View {
         if presented.item.presentable is AnyView {
             // A view gets its own navigation stack, so that it can push routes.
             NavigationHostView(
