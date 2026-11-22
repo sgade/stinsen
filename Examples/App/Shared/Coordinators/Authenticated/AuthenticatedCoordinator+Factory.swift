@@ -3,8 +3,8 @@ import SwiftUI
 import Stinsen
 
 extension AuthenticatedCoordinator {
-    func makeTestbed()  -> NavigationViewCoordinator<TestbedEnvironmentObjectCoordinator> {
-        return NavigationViewCoordinator(TestbedEnvironmentObjectCoordinator())
+    func makeTestbed()  -> NavigationStackCoordinator<TestbedEnvironmentObjectCoordinator> {
+        return NavigationStackCoordinator(TestbedEnvironmentObjectCoordinator())
     }
     
     @ViewBuilder func makeTestbedTab(isActive: Bool) -> some View {
@@ -12,7 +12,7 @@ extension AuthenticatedCoordinator {
         Text("Testbed")
     }
     
-    func onTestbedTapped(_ isRepeat: Bool, coordinator: NavigationViewCoordinator<TestbedEnvironmentObjectCoordinator>) {
+    func onTestbedTapped(_ isRepeat: Bool, coordinator: NavigationStackCoordinator<TestbedEnvironmentObjectCoordinator>) {
         if isRepeat {
             coordinator.child.popToRoot()
         }
@@ -27,8 +27,8 @@ extension AuthenticatedCoordinator {
         Text("Home")
     }
     
-    func makeTodos() -> NavigationViewCoordinator<TodosCoordinator> {
-        return NavigationViewCoordinator(TodosCoordinator(todosStore: todosStore))
+    func makeTodos() -> NavigationStackCoordinator<TodosCoordinator> {
+        return NavigationStackCoordinator(TodosCoordinator(todosStore: todosStore))
     }
     
     @ViewBuilder func makeTodosTab(isActive: Bool) -> some View {
@@ -36,8 +36,8 @@ extension AuthenticatedCoordinator {
         Text("Todos")
     }
     
-    func makeProfile() -> NavigationViewCoordinator<ProfileCoordinator> {
-        return NavigationViewCoordinator(ProfileCoordinator(user: user))
+    func makeProfile() -> NavigationStackCoordinator<ProfileCoordinator> {
+        return NavigationStackCoordinator(ProfileCoordinator(user: user))
     }
     
     @ViewBuilder func makeProfileTab(isActive: Bool) -> some View {

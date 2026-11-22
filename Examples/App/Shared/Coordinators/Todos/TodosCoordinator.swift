@@ -3,7 +3,7 @@ import SwiftUI
 import Stinsen
 
 final class TodosCoordinator: NavigationCoordinatable {
-    let stack = NavigationStack(initial: \TodosCoordinator.start)
+    let stack = CoordinatorStack(initial: \TodosCoordinator.start)
 
     @Root var start = makeStart
     @Route(.push) var todo = makeTodo

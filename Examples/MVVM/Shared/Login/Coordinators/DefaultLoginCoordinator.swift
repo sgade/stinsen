@@ -10,7 +10,7 @@ import SwiftUI
 import Stinsen
 
 final class DefaultLoginCoordinator: LoginCoordinator, NavigationCoordinatable {
-    var stack: Stinsen.NavigationStack<DefaultLoginCoordinator> = NavigationStack(initial: \.start)
+    var stack: CoordinatorStack<DefaultLoginCoordinator> = CoordinatorStack(initial: \.start)
     @Root var start = makeStart
     @Root var authenticated = makeAuthenticated
     

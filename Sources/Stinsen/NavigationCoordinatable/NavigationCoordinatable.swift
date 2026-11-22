@@ -1,6 +1,5 @@
 import Foundation
 import SwiftUI
-import Combine
 
 public protocol NavigationCoordinatable: Coordinatable {
     typealias Route = NavigationRoute
@@ -11,7 +10,7 @@ public protocol NavigationCoordinatable: Coordinatable {
 
     var routerStorable: RouterStoreType { get }
     
-    var stack: NavigationStack<Self> { get }
+    var stack: CoordinatorStack<Self> { get }
 
     /**
      Implement this function if you wish to customize the view on all views and child coordinators, for instance, if you wish to change the `tintColor` or inject an `EnvironmentObject`.
@@ -321,47 +320,41 @@ public extension NavigationCoordinatable {
         parent.dismissChild(coordinator: self, action: action)
     }
     
+    /// Connects the stack to this coordinator and creates the root. Stinsen calls it before it uses the stack.
+    internal func prepareStack() {
+        if stack.coordinator !== self {
+            stack.coordinator = self
+        }
+
+        if stack.rootItem == nil {
+            setupRoot()
+        }
+    }
+
     internal func setupRoot() {
         let a = self[keyPath: self.stack.initial] as! NavigationOutputable
         let presentable = a.using(coordinator: self, input: self.stack.initialInput as Any)
-        
-        let item = NavigationRootItem(
+
+        self.stack.rootItem = NavigationRootItem(
             keyPath: self.stack.initial.hashValue,
             input: self.stack.initialInput,
             child: presentable
         )
-        
-        self.stack.root = NavigationRoot(item: item)
+
+        _ = CoordinatorPath.navigationStack(of: presentable)
     }
-    
-    internal func appear(_ int: Int) {        
-        self.popTo(int, nil)
-    }
-    
+
     func popLast(_ action: (() -> ())? = nil) {
         self.popTo(self.stack.value.count - 2, action)
     }
-    
-    internal func popTo(_ int: Int, _ action: (() -> ())? = nil) {
-        if let action = action {
-            self.stack.dismissalAction[int] = action
-        }
 
-        guard int + 1 <= self.stack.value.count else {
-            return
-        }
-        
-        if int == -1 {
-            self.stack.value = []
-            self.stack.poppedTo.send(-1)
-        } else if int >= 0 {
-            self.stack.value = Array(self.stack.value.prefix(int + 1))
-            self.stack.poppedTo.send(int)
-        }
+    internal func popTo(_ int: Int, _ action: (() -> ())? = nil) {
+        stack.popTo(int, action)
     }
-    
+
     func view() -> AnyView {
-        return AnyView(NavigationCoordinatableView(id: -1, coordinator: self))
+        prepareStack()
+        return AnyView(ScreenView(coordinator: self, stack: stack, index: -1, item: nil, appliesCustomize: true))
     }
 
     @discardableResult func popToRoot(_ action: (() -> ())? = nil) -> Self {
@@ -393,6 +386,7 @@ public extension NavigationCoordinatable {
             )
         )
         output.parent = self
+        _ = CoordinatorPath.navigationStack(of: output)
         return output
     }
     
@@ -418,6 +412,7 @@ public extension NavigationCoordinatable {
             )
         )
         output.parent = self
+        _ = CoordinatorPath.navigationStack(of: output)
         return output
     }
     
@@ -583,13 +578,14 @@ public extension NavigationCoordinatable {
         _ route: KeyPath<Self, Transition<Self, RootSwitch, Input, Output>>,
         inputItem: (input: Input, comparator: (Input, Input) -> Bool)?
     ) -> Output {
-        if stack.root.item.keyPath == route.hashValue {
+        prepareStack()
+        if stack.rootItem!.keyPath == route.hashValue {
             if let inputItem = inputItem {
-                if inputItem.comparator(inputItem.input, stack.root.item.input! as! Input) == true {
-                    return stack.root.item.child as! Output
+                if inputItem.comparator(inputItem.input, stack.rootItem!.input! as! Input) == true {
+                    return stack.rootItem!.child as! Output
                 }
             } else {
-                return stack.root.item.child as! Output
+                return stack.rootItem!.child as! Output
             }
         }
         
@@ -601,12 +597,14 @@ public extension NavigationCoordinatable {
             output = self[keyPath: route].closure(self)(() as! Input)
         }
         
-        stack.root.item = NavigationRootItem(
+        stack.rootItem = NavigationRootItem(
             keyPath: route.hashValue,
             input: inputItem?.input,
             child: output
         )
-        
+
+        _ = CoordinatorPath.navigationStack(of: output)
+
         return output
     }
     
@@ -614,9 +612,10 @@ public extension NavigationCoordinatable {
         _ route: KeyPath<Self, Transition<Self, RootSwitch, Input, Output>>,
         inputItem: (input: Input, comparator: (Input, Input) -> Bool)?
     ) -> Self {
-        if stack.root.item.keyPath == route.hashValue {
+        prepareStack()
+        if stack.rootItem!.keyPath == route.hashValue {
             if let inputItem = inputItem {
-                if inputItem.comparator(inputItem.input, stack.root.item.input! as! Input) == true {
+                if inputItem.comparator(inputItem.input, stack.rootItem!.input! as! Input) == true {
                     return self
                 }
             } else {
@@ -632,7 +631,7 @@ public extension NavigationCoordinatable {
             output = self[keyPath: route].closure(self)(() as! Input)
         }
         
-        stack.root.item = NavigationRootItem(
+        stack.rootItem = NavigationRootItem(
             keyPath: route.hashValue,
             input: inputItem?.input,
             child: AnyView(output)
@@ -699,7 +698,8 @@ public extension NavigationCoordinatable {
         _ route: KeyPath<Self, Transition<Self, RootSwitch, Input, Output>>,
         inputItem: (input: Input, comparator: (Input, Input) -> Bool)?
     ) -> Bool {
-        guard stack.root.item.keyPath == route.hashValue else {
+        prepareStack()
+        guard stack.rootItem!.keyPath == route.hashValue else {
             return false
         }
         
@@ -707,7 +707,7 @@ public extension NavigationCoordinatable {
             return true
         }
 
-        guard let compareTo = stack.root.item.input else {
+        guard let compareTo = stack.rootItem!.input else {
             fatalError()
         }
 
@@ -718,7 +718,8 @@ public extension NavigationCoordinatable {
         _ route: KeyPath<Self, Transition<Self, RootSwitch, Input, Output>>,
         inputItem: (input: Input, comparator: (Input, Input) -> Bool)?
     ) -> Bool {
-        guard stack.root.item.keyPath == route.hashValue else {
+        prepareStack()
+        guard stack.rootItem!.keyPath == route.hashValue else {
             return false
         }
         
@@ -726,7 +727,7 @@ public extension NavigationCoordinatable {
             return true
         }
 
-        guard let compareTo = stack.root.item.input else {
+        guard let compareTo = stack.rootItem!.input else {
             fatalError()
         }
 
@@ -737,7 +738,7 @@ public extension NavigationCoordinatable {
         _ route: KeyPath<Self, Transition<Self, RootSwitch, Input, Output>>,
         inputItem: (input: Input, comparator: (Input, Input) -> Bool)?
     ) -> Output? {
-        return _isRoot(route, inputItem: inputItem) ? (stack.root.item.child as! Output) : nil
+        return _isRoot(route, inputItem: inputItem) ? (stack.rootItem!.child as! Output) : nil
     }
     
     @discardableResult func isRoot<Output: Coordinatable>(

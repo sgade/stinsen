@@ -3,8 +3,8 @@ import SwiftUI
 import Stinsen
 
 extension MainCoordinator {
-    func makeUnauthenticated() -> NavigationViewCoordinator<UnauthenticatedCoordinator> {
-        return NavigationViewCoordinator(UnauthenticatedCoordinator())
+    func makeUnauthenticated() -> NavigationStackCoordinator<UnauthenticatedCoordinator> {
+        return NavigationStackCoordinator(UnauthenticatedCoordinator())
     }
     
     func makeAuthenticated(user: User) -> AuthenticatedCoordinator {

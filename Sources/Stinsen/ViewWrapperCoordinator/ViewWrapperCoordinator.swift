@@ -1,7 +1,7 @@
 import Foundation
 import SwiftUI
 
-/// The NavigationViewCoordinator is used to represent a coordinator with a NavigationView
+/// The ViewWrapperCoordinator puts the view of a child coordinator in a custom view.
 open class ViewWrapperCoordinator<T: Coordinatable, V: View>: @MainActor Coordinatable {
     public func dismissChild<Child: Coordinatable>(coordinator: Child, action: (() -> Void)?) {
         guard let parent = self.parent else {
@@ -15,6 +15,12 @@ open class ViewWrapperCoordinator<T: Coordinatable, V: View>: @MainActor Coordin
     public weak var parent: ChildDismissable?
     public let child: T
     private let viewFactory: (any Coordinatable) -> (AnyView) -> V
+
+    /// The stack of the child if the child is a `NavigationCoordinatable`.
+    /// Its pushes then go into the `NavigationStack` that shows this coordinator.
+    var childNavigationStack: AnyCoordinatorStack? {
+        CoordinatorPath.navigationStack(of: child)
+    }
 
     public func view() -> AnyView {
         AnyView(
@@ -34,3 +40,5 @@ open class ViewWrapperCoordinator<T: Coordinatable, V: View>: @MainActor Coordin
         self.child.parent = self
     }
 }
+
+extension ViewWrapperCoordinator: WrappingCoordinator {}

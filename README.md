@@ -23,7 +23,7 @@ Example using a Navigation Stack:
 
 ```swift
 final class UnauthenticatedCoordinator: NavigationCoordinatable {
-    let stack = NavigationStack(initial: \UnauthenticatedCoordinator.start)
+    let stack = CoordinatorStack(initial: \UnauthenticatedCoordinator.start)
     
     @Root var start = makeStart
     @Route(.modal) var forgotPassword = makeForgotPassword
@@ -44,14 +44,14 @@ final class UnauthenticatedCoordinator: NavigationCoordinatable {
 
 ```
 
-The `@Route`s defines all the possible routes that can be performed from the current coordinator and the transition that will be performed. The value on the right hand side is the factory function that will be executed when routing. The function can return either a SwiftUI view or another coordinator. The `@Root` another type of route that has no transition, and used for defining the first view of the coordinator's navigation stack, which is referenced by the `NavigationStack`-class.  
+The `@Route`s defines all the possible routes that can be performed from the current coordinator and the transition that will be performed. The value on the right hand side is the factory function that will be executed when routing. The function can return either a SwiftUI view or another coordinator. The `@Root` another type of route that has no transition, and used for defining the first view of the coordinator's navigation stack, which is referenced by the `CoordinatorStack`-class.  
 
 _Stinsen_ out of the box has two different kinds of `Coordinatable` protocols your coordinators can implement: 
 
-* `NavigationCoordinatable` - For navigational flows. Make sure to wrap these in a NavigationViewCoordinator if you wish to push on the navigation stack.
+* `NavigationCoordinatable` - For navigational flows. Make sure to wrap these in a `NavigationStackCoordinator` if you wish to push on the navigation stack.
 * `TabCoordinatable` - For TabViews.
 
-In addition, _Stinsen_ also has two Coordinators you can use, `ViewWrapperCoordinator` and `NavigationViewCoordinator`. `ViewWrapperCoordinator` is a coordinator you can either subclass or use right away to wrap your coordinator in a view, and `NavigationViewCoordinator` is a `ViewWrapperCoordinator` subclass that wraps your coordinator in a `NavigationView`.   
+In addition, _Stinsen_ also has two Coordinators you can use, `ViewWrapperCoordinator` and `NavigationStackCoordinator`. `ViewWrapperCoordinator` is a coordinator you can either subclass or use right away to wrap your coordinator in a view, and `NavigationStackCoordinator` is a `ViewWrapperCoordinator` subclass that wraps your coordinator in a SwiftUI `NavigationStack`. The routes that the coordinator and its child coordinators push become the path of that `NavigationStack`.   
 
 ## Showing the coordinator for the user
 The view for the coordinator can be created using `.view()`, so in order to show a coordinator to the user you would just do something like:
@@ -66,7 +66,7 @@ struct StinsenApp: App {
 }
 ```
 
-_Stinsen_ can be used to power your whole app, or just parts of your app. You can still use the usual SwiftUI `NavigationLink`s and present modal sheets inside views managed by _Stinsen_, if you wish to do so.
+_Stinsen_ can be used to power your whole app, or just parts of your app. You can still present modal sheets inside views managed by _Stinsen_, if you wish to do so. _Stinsen_ owns the path of its `NavigationStack`s, so use the router to push routes, not `NavigationLink(value:)`.
 
 ## Navigating from the coordinator
 Using a router, which has a reference to both the coordinator and the view, we can perform transitions from a view. Inside the view, the router can be fetched using `@EnvironmentObject`. Using the router one can transition to other routes:
@@ -234,7 +234,7 @@ VStack {
 The `AuthenticatedCoordinator` referenced by the `authenticatedRouter` is a `TabCoordinatable`, so the function will:
 
 * `focusFirst`: return the first tab represented by the route `todos` and make it the active tab, unless it already is the active one.
-* `child`: will return it's child, the `Todos`-tab is a `NavigationViewCoordinator` and the child is the `NavigationCoordinatable`.
+* `child`: will return it's child, the `Todos`-tab is a `NavigationStackCoordinator` and the child is the `NavigationCoordinatable`.
 * `popToRoot`: will pop away any children that may or may not have been present.
 * `route`: will route to the route `Todo` with the specified id. 
 
@@ -279,10 +279,22 @@ _Stinsen_ can be installed using the Swift Package Manager.
 
 Open Xcode and your project, click `File / Swift Packages / Add package dependency...` .  In the textfield "_Enter package repository URL_", write `https://github.com/rundfunk47/stinsen` and press _Next_ twice
 
+_Stinsen_ requires iOS 17, macOS 14, tvOS 17 or watchOS 10, and Swift 6.2.
+
+In the Swift 6 language mode, declare the conformance of a coordinator on the main actor:
+
+```swift
+final class TodosCoordinator: @MainActor NavigationCoordinatable {
+    /* ... */
+}
+```
+
 # Known issues and bugs 🐛
 
-* _Stinsen_ does not support `DoubleColumnNavigationViewStyle`. The reason for this is that it does not work as expected due to issues with `isActive` in SwiftUI. _Workaround:_ Use UIViewRepresentable or create your own implementation.
-* _Stinsen_ works pretty bad in various older versions of iOS 13 due to, well, iOS 13 not really being that good at SwiftUI. Rather than trying to set a minimum version that _Stinsen_ supports, you're on your own if you're supporting iOS 13 to figure out whether or not the features you use actually work. Generally, version 13.4 and above seem to work alright.
+* _Stinsen_ does not have a coordinator for `NavigationSplitView`. _Workaround:_ Create your own `Coordinatable`.
+* A `NavigationStack` gives a pushed screen the environment of the stack, not the environment of the screen that pushed it. _Stinsen_ adds the routers and the `customize` modifications of all coordinators above a pushed screen. If a child coordinator that you push implements `customize`, _Stinsen_ applies it to the root and to each pushed screen of that child. Thus do not put side effects such as `onOpenURL` in the `customize` of a pushed child coordinator.
+* For a coordinator in a `NavigationStackCoordinator`, _Stinsen_ applies `customize` around the `NavigationStack`, so that all pushed screens get the environment. Thus `.navigationTitle` and `.toolbar` in `customize` have no effect there. Put them in the screens.
+* If a coordinator shows a modal route while a pushed child coordinator has pushed screens, the modal is presented from a screen under those pushed screens. Pop the child coordinator first, or show the modal from the child.
 
 # Who are responsible? 🙋🏿‍♂️
 
@@ -291,6 +303,17 @@ At Byva we strive to create a 100% SwiftUI application, so it is natural that we
 # Why the name "Stinsen"? 🚂 
 
 _Stins_ is short in Swedish for "Station Master", and _Stinsen_ is the definite article, "The Station Master". Colloquially the term was mostly used to refer to the Train Dispatcher, who is responsible for routing the trains. The logo is based on a wooden statue of a _stins_ that is located near the train station in Linköping, Sweden.
+
+# Updating from Stinsen v2 🚀
+
+Stinsen v3 uses the SwiftUI `NavigationStack` instead of `NavigationView`. The routing API and its type safety do not change.
+
+* The minimum versions are iOS 17, macOS 14, tvOS 17 and watchOS 10.
+* `NavigationStack` (the stack of a `NavigationCoordinatable`) is now `CoordinatorStack`, because the old name is the same as the SwiftUI type. Change `let stack = NavigationStack(initial: \.start)` to `let stack = CoordinatorStack(initial: \.start)`, and `Stinsen.NavigationStack<T>` to `CoordinatorStack<T>`.
+* `NavigationViewCoordinator` is now `NavigationStackCoordinator`. The old name is a deprecated typealias.
+* A deep link that pushes many screens now updates the navigation path in one step.
+* A modal route that shows a view puts the view in its own `NavigationStack`. As before, the navigation bar of its first screen is hidden.
+* `TabChild` uses Observation and is not an `ObservableObject` anymore.
 
 # Updating from Stinsen v1 🚀
 

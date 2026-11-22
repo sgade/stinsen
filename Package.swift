@@ -5,10 +5,10 @@ import PackageDescription
 let package = Package(
     name: "Stinsen",
     platforms: [
-        .iOS(.v13),
-        .macOS(.v10_15),
-        .tvOS(.v13),
-        .watchOS(.v7)
+        .iOS(.v17),
+        .macOS(.v14),
+        .tvOS(.v17),
+        .watchOS(.v10)
     ],
     products: [
         .library(name: "Stinsen", targets: ["Stinsen"])
@@ -16,6 +16,13 @@ let package = Package(
     targets: [
         .target(
             name: "Stinsen",
+            swiftSettings: [
+                .defaultIsolation(MainActor.self)
+            ]
+        ),
+        .testTarget(
+            name: "StinsenTests",
+            dependencies: ["Stinsen"],
             swiftSettings: [
                 .defaultIsolation(MainActor.self)
             ]
