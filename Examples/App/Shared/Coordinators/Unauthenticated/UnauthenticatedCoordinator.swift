@@ -4,7 +4,7 @@ import SwiftUI
 import Stinsen
 
 final class UnauthenticatedCoordinator: NavigationCoordinatable {
-    let stack = NavigationStack(initial: \UnauthenticatedCoordinator.start)
+    let stack = CoordinatorStack(initial: \UnauthenticatedCoordinator.start)
     let unauthenticatedServices = UnauthenticatedServices()
     
     @Root var start = makeStart

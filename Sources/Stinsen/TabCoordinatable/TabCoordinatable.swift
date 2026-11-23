@@ -48,8 +48,14 @@ public extension TabCoordinatable {
         }
     }
 
-    func dismissChild<T: Coordinatable>(coordinator: T, action: (() -> Void)?) {
-        fatalError("Not implemented")
+    func canDismissChild<T: Coordinatable>(_ coordinator: T) -> Bool {
+        false
+    }
+
+    /// A tab cannot be dismissed. To show other content, focus another tab, or dismiss the tab coordinator itself.
+    @discardableResult func dismissChild<T: Coordinatable>(coordinator: T, action: (() -> Void)?) -> Bool {
+        reportMisuse("Cannot dismiss \(type(of: coordinator)), because it is a tab of \(type(of: self)).")
+        return false
     }
     
     var parent: ChildDismissable? {
@@ -71,14 +77,14 @@ public extension TabCoordinatable {
                     TabChildItem(
                         presentable: val.using(coordinator: self),
                         keyPathIsEqual: {
-                            let lhs = abs as! PartialKeyPath<Self>
-                            let rhs = $0 as! PartialKeyPath<Self>
-                            return (lhs == rhs)
+                            ($0 as? AnyKeyPath) == abs
                         },
-                        tabItem: { [unowned self] in
-                            val.tabItem(active: $0, coordinator: self)
+                        tabItem: { [weak self] in
+                            guard let self else { return AnyView(EmptyView()) }
+                            return val.tabItem(active: $0, coordinator: self)
                         },
-                        onTapped: { [unowned self] isRepeat in
+                        onTapped: { [weak self] isRepeat in
+                            guard let self else { return }
                             val.onTapped(isRepeat, coordinator: self)
                         }
                     )
@@ -103,47 +109,44 @@ public extension TabCoordinatable {
         )
     }
     
+    /// Makes the tab of `route` the active tab and returns its coordinator.
+    ///
+    /// If `route` is not a tab of this coordinator, the active tab does not change.
+    /// The function then returns a new coordinator that is not shown, and logs a fault.
     @discardableResult func focusFirst<Output: Coordinatable>(
         _ route: KeyPath<Self, Content<Self, Output>>
     ) -> Output {
-        if child.allItems == nil {
-            setupAllTabs()
+        if let tab = tab(of: route), let output = tab.item.presentable as? Output {
+            self.child.activeTab = tab.index
+            return output
         }
-        
-        guard let value = child.allItems.enumerated().first(where: { item in
-            guard item.element.keyPathIsEqual(route) else {
-                return false
-            }
-            
-            return true
-        }) else {
-            fatalError()
-        }
-        
-        self.child.activeTab = value.offset
-        
-        return value.element.presentable as! Output
+
+        reportMisuse("\(route) is not a tab of \(type(of: self)). The returned coordinator is not shown.")
+        return self[keyPath: route].closure(self)()
     }
-    
+
+    /// Makes the tab of `route` the active tab. If `route` is not a tab, the active tab does not change.
     @discardableResult func focusFirst<Output: View>(
         _ route: KeyPath<Self, Content<Self, Output>>
     ) -> Self {
+        if let tab = tab(of: route) {
+            self.child.activeTab = tab.index
+        } else {
+            reportMisuse("\(route) is not a tab of \(type(of: self)).")
+        }
+
+        return self
+    }
+
+    private func tab<Output>(of route: KeyPath<Self, Content<Self, Output>>) -> (index: Int, item: TabChildItem)? {
         if child.allItems == nil {
             setupAllTabs()
         }
 
-        guard let value = child.allItems.enumerated().first(where: { item in
-            guard item.element.keyPathIsEqual(route) else {
-                return false
-            }
-            
-            return true
-        }) else {
-            fatalError()
+        guard let items = child.allItems, let index = items.firstIndex(where: { $0.keyPathIsEqual(route) }) else {
+            return nil
         }
-        
-        self.child.activeTab = value.offset
-        
-        return self
+
+        return (index, items[index])
     }
 }

@@ -1,22 +1,28 @@
 import Foundation
 
+/// Gives the router of the most recent screen with a router of type `Value`.
+///
+/// The wrapper holds the router weakly. A router keeps its coordinator alive, and the coordinator
+/// can keep the object that uses this wrapper alive (for example a view model), so a strong
+/// reference would make a retain cycle. If the router does not exist anymore, the wrapper
+/// gets the most recent router of the same type again.
 @propertyWrapper public struct RouterObject<Value: Routable> {
     private var storage: RouterStore
-    private var retreived: Value?
-    
+    private var retrieved = WeakRef<AnyObject>()
+
     public var wrappedValue: Value? {
         mutating get {
-            guard let currentValue: Value = self.retreived else {
-                self.retreived = storage.retrieve()
-                return self.retreived
+            if let currentValue = retrieved.value as? Value {
+                return currentValue
             }
-            return currentValue
+
+            let value: Value? = storage.retrieve()
+            retrieved = WeakRef(value: value)
+            return value
         }
-        @available(*, unavailable, message: "RouterObject cannot be set") set {
-            fatalError()
-        }
+        @available(*, unavailable, message: "RouterObject cannot be set") set {}
     }
-    
+
     public init() {
         self.storage = RouterStore.shared
     }

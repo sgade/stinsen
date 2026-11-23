@@ -1,4 +1,5 @@
 import Foundation
+import Observation
 import SwiftUI
 
 struct TabChildItem {
@@ -9,26 +10,31 @@ struct TabChildItem {
 }
 
 /// Wrapper around childCoordinators
-/// Used so that you don't need to write @Published
-public class TabChild: ObservableObject {
-    weak var parent: ChildDismissable?
+@Observable
+public class TabChild {
+    @ObservationIgnored weak var parent: ChildDismissable?
     public let startingItems: [AnyKeyPath]
-    
-    @Published var activeItem: TabChildItem!
-    
-    var allItems: [TabChildItem]!
-    
+
+    var activeItem: TabChildItem?
+
+    @ObservationIgnored var allItems: [TabChildItem]?
+
     public var activeTab: Int {
         didSet {
-            allItems[activeTab].onTapped(oldValue == activeTab)            
-            guard oldValue != activeTab else { return }
-            let newItem = allItems[activeTab]
-            Task { @MainActor in
-                self.activeItem = newItem
+            guard let item = allItems?[safe: activeTab] else {
+                // Before the tabs show, Stinsen cannot check the index. TabView ignores an unknown tab.
+                if let allItems {
+                    reportMisuse("Tab \(activeTab) does not exist. There are \(allItems.count) tabs.")
+                }
+                return
             }
+
+            item.onTapped(oldValue == activeTab)
+            guard oldValue != activeTab else { return }
+            activeItem = item
         }
     }
-    
+
     public init(startingItems: [AnyKeyPath], activeTab: Int = 0) {
         self.startingItems = startingItems
         self.activeTab = activeTab

@@ -10,17 +10,30 @@ protocol Outputable {
 public class Content<T: TabCoordinatable, Output: ViewPresentable>: Outputable {
     
     func tabItem(active: Bool, coordinator: Any) -> AnyView {
-        return self.tabItem(coordinator as! T)(active)
+        guard let coordinator = coordinator as? T else {
+            return AnyView(EmptyView())
+        }
+
+        return self.tabItem(coordinator)(active)
     }
-    
+
     func using(coordinator: Any) -> ViewPresentable {
-        let closureOutput = self.closure(coordinator as! T)()
+        guard let coordinator = coordinator as? T else {
+            reportMisuse("The tab of \(T.self) got a coordinator of type \(type(of: coordinator)). Stinsen shows an empty view.")
+            return AnyView(EmptyView())
+        }
+
+        let closureOutput = self.closure(coordinator)()
         self.output = closureOutput
         return closureOutput
     }
-    
+
     func onTapped(_ isRepeat: Bool, coordinator: Any) {
-        self.onTapped(coordinator as! T)(isRepeat, output!)
+        guard let coordinator = coordinator as? T, let output else {
+            return
+        }
+
+        self.onTapped(coordinator)(isRepeat, output)
     }
     
     let closure: ((T) -> (() -> Output))

@@ -8,17 +8,16 @@ extension TestbedEnvironmentObjectCoordinator {
     }
     
     @ViewBuilder func makeModalScreen() -> some View {
-        NavigationView {
-            TestbedEnvironmentObjectScreen()
-        }
+        // Stinsen shows a modal view in its own NavigationStack, so the screen does not add one.
+        TestbedEnvironmentObjectScreen()
     }
     
     func makePushCoordinator() -> TestbedEnvironmentObjectCoordinator {
         return TestbedEnvironmentObjectCoordinator()
     }
     
-    func makeModalCoordinator() -> NavigationViewCoordinator<TestbedEnvironmentObjectCoordinator> {
-        return NavigationViewCoordinator(TestbedEnvironmentObjectCoordinator())
+    func makeModalCoordinator() -> NavigationStackCoordinator<TestbedEnvironmentObjectCoordinator> {
+        return NavigationStackCoordinator(TestbedEnvironmentObjectCoordinator())
     }
     
     @ViewBuilder func makeStart() -> some View {

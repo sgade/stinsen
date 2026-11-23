@@ -1,6 +1,5 @@
 import Foundation
 import SwiftUI
-import Combine
 
 public protocol NavigationCoordinatable: Coordinatable {
     typealias Route = NavigationRoute
@@ -11,7 +10,7 @@ public protocol NavigationCoordinatable: Coordinatable {
 
     var routerStorable: RouterStoreType { get }
     
-    var stack: NavigationStack<Self> { get }
+    var stack: CoordinatorStack<Self> { get }
 
     /**
      Implement this function if you wish to customize the view on all views and child coordinators, for instance, if you wish to change the `tintColor` or inject an `EnvironmentObject`.
@@ -20,7 +19,11 @@ public protocol NavigationCoordinatable: Coordinatable {
      */
     func customize(_ view: AnyView) -> CustomizeViewType
     
-    func dismissCoordinator(_ action: (() -> ())?)
+    /// Asks the coordinator that presents this coordinator to dismiss it.
+    ///
+    /// - Returns: `false` if no coordinator can dismiss this coordinator, for example the root coordinator of a tab.
+    ///   Stinsen then does nothing and reports a misuse. Use `canDismissCoordinator` to check before.
+    @discardableResult func dismissCoordinator(_ action: (() -> ())?) -> Bool
     
     /**
      Clears the stack.
@@ -192,14 +195,6 @@ public protocol NavigationCoordinatable: Coordinatable {
     ) -> Self
     
     @discardableResult func root<Input, Output: Coordinatable>(
-        _ route: KeyPath<Self, Transition<Self, RootSwitch, Input, Output>>
-    ) -> Output
-    
-    @discardableResult func root<Input, Output: View>(
-        _ route: KeyPath<Self, Transition<Self, RootSwitch, Input, Output>>
-    ) -> Self
-    
-    @discardableResult func root<Input, Output: Coordinatable>(
         _ route: KeyPath<Self, Transition<Self, RootSwitch, Input, Output>>,
         _ input: Input,
         comparator: @escaping (Input, Input) -> Bool
@@ -298,70 +293,87 @@ public extension NavigationCoordinatable {
         return view
     }
     
-    func dismissChild<T: Coordinatable>(coordinator: T, action: (() -> Void)? = nil) {
-        guard let value = stack.value.firstIndex(where: { item in
+    func canDismissChild<T: Coordinatable>(_ coordinator: T) -> Bool {
+        stackIndex(of: coordinator) != nil
+    }
+
+    /// `true` if a coordinator presents this coordinator and can dismiss it.
+    ///
+    /// For example, the root coordinator of a tab or of the app cannot be dismissed.
+    var canDismissCoordinator: Bool {
+        stack.parent?.canDismissChild(self) ?? false
+    }
+
+    private func stackIndex<T: Coordinatable>(of coordinator: T) -> Int? {
+        stack.value.firstIndex { item in
             guard let presentable = item.presentable as? StringIdentifiable else {
                 return false
             }
-            
+
             return presentable.id == coordinator.id
-        }) else {
-            assertionFailure("Can not dismiss child when coordinator is top of the stack.")
-            return
         }
-        
+    }
+
+    @discardableResult func dismissChild<T: Coordinatable>(coordinator: T, action: (() -> Void)? = nil) -> Bool {
+        guard let value = stackIndex(of: coordinator) else {
+            reportMisuse("Cannot dismiss \(type(of: coordinator)), because it is not in the stack of \(type(of: self)).")
+            return false
+        }
+
         self.popTo(value - 1, action)
+        return true
     }
     
-    func dismissCoordinator(_ action: (() -> ())? = nil) {
+    @discardableResult func dismissCoordinator(_ action: (() -> ())? = nil) -> Bool {
         guard let parent = stack.parent else {
-            assertionFailure("Can not dismiss coordinator when parent is null.")
-            return
+            reportMisuse("Cannot dismiss \(type(of: self)), because no coordinator presents it. Check canDismissCoordinator first.")
+            return false
         }
-        parent.dismissChild(coordinator: self, action: action)
+
+        // If the parent cannot dismiss this coordinator, the parent reports the misuse.
+        return parent.dismissChild(coordinator: self, action: action)
     }
     
+    /// Connects the stack to this coordinator and creates the root. Stinsen calls it before it uses the stack.
+    internal func prepareStack() {
+        if stack.coordinator !== self {
+            stack.coordinator = self
+        }
+
+        if stack.rootItem == nil {
+            setupRoot()
+        }
+    }
+
     internal func setupRoot() {
-        let a = self[keyPath: self.stack.initial] as! NavigationOutputable
-        let presentable = a.using(coordinator: self, input: self.stack.initialInput as Any)
-        
-        let item = NavigationRootItem(
+        let presentable: ViewPresentable
+        if let route = self[keyPath: self.stack.initial] as? NavigationOutputable {
+            presentable = route.using(coordinator: self, input: self.stack.initialInput as Any)
+        } else {
+            reportMisuse("The initial route of \(type(of: self)) is not a @Root or @Route. Stinsen shows an empty view.")
+            presentable = AnyView(EmptyView())
+        }
+
+        self.stack.rootItem = NavigationRootItem(
             keyPath: self.stack.initial.hashValue,
             input: self.stack.initialInput,
             child: presentable
         )
-        
-        self.stack.root = NavigationRoot(item: item)
+
+        _ = CoordinatorPath.navigationStack(of: presentable)
     }
-    
-    internal func appear(_ int: Int) {        
-        self.popTo(int, nil)
-    }
-    
+
     func popLast(_ action: (() -> ())? = nil) {
         self.popTo(self.stack.value.count - 2, action)
     }
-    
-    internal func popTo(_ int: Int, _ action: (() -> ())? = nil) {
-        if let action = action {
-            self.stack.dismissalAction[int] = action
-        }
 
-        guard int + 1 <= self.stack.value.count else {
-            return
-        }
-        
-        if int == -1 {
-            self.stack.value = []
-            self.stack.poppedTo.send(-1)
-        } else if int >= 0 {
-            self.stack.value = Array(self.stack.value.prefix(int + 1))
-            self.stack.poppedTo.send(int)
-        }
+    internal func popTo(_ int: Int, _ action: (() -> ())? = nil) {
+        stack.popTo(int, action)
     }
-    
+
     func view() -> AnyView {
-        return AnyView(NavigationCoordinatableView(id: -1, coordinator: self))
+        prepareStack()
+        return AnyView(ScreenView(coordinator: self, stack: stack, index: -1, item: nil, appliesCustomize: true))
     }
 
     @discardableResult func popToRoot(_ action: (() -> ())? = nil) -> Self {
@@ -393,6 +405,7 @@ public extension NavigationCoordinatable {
             )
         )
         output.parent = self
+        _ = CoordinatorPath.navigationStack(of: output)
         return output
     }
     
@@ -418,6 +431,7 @@ public extension NavigationCoordinatable {
             )
         )
         output.parent = self
+        _ = CoordinatorPath.navigationStack(of: output)
         return output
     }
     
@@ -484,18 +498,22 @@ public extension NavigationCoordinatable {
                 return true
             }
             
-            guard let compareTo = item.element.input else {
-                fatalError()
+            guard let compareTo = Self.storedInput(item.element.input, as: Input.self) else {
+                return false
             }
-            
-            return input.comparator(compareTo as! Input, input.value)
+
+            return input.comparator(compareTo, input.value)
         }) else {
             throw FocusError.routeNotFound
         }
         
+        guard let output = value.element.presentable as? Output else {
+            throw FocusError.routeNotFound
+        }
+
         self.popTo(value.offset, nil)
-        
-        return value.element.presentable as! Output
+
+        return output
     }
     
     @discardableResult private func _focusFirst<Input, Output: View>(
@@ -511,11 +529,11 @@ public extension NavigationCoordinatable {
                 return true
             }
             
-            guard let compareTo = item.element.input else {
-                fatalError()
+            guard let compareTo = Self.storedInput(item.element.input, as: Input.self) else {
+                return false
             }
-            
-            return input.comparator(compareTo as! Input, input.value)
+
+            return input.comparator(compareTo, input.value)
         }) else {
             throw FocusError.routeNotFound
         }
@@ -579,165 +597,132 @@ public extension NavigationCoordinatable {
         try self._focusFirst(route, nil)
     }
     
+    /// Returns the input that Stinsen stored for a route as `Input`. A `Void` route stores `nil`.
+    private static func storedInput<Input>(_ input: Any?, as type: Input.Type) -> Input? {
+        if let input = input as? Input {
+            return input
+        }
+
+        return () as? Input
+    }
+
+    /// Replaces the root with `route`, unless `route` with the same input is the root already.
     @discardableResult private func _root<Output: Coordinatable, Input>(
         _ route: KeyPath<Self, Transition<Self, RootSwitch, Input, Output>>,
-        inputItem: (input: Input, comparator: (Input, Input) -> Bool)?
+        input: Input,
+        comparator: ((Input, Input) -> Bool)?
     ) -> Output {
-        if stack.root.item.keyPath == route.hashValue {
-            if let inputItem = inputItem {
-                if inputItem.comparator(inputItem.input, stack.root.item.input! as! Input) == true {
-                    return stack.root.item.child as! Output
-                }
-            } else {
-                return stack.root.item.child as! Output
-            }
+        let inputItem = comparator.map { (input: input, comparator: $0) }
+        if _isRoot(route, inputItem: inputItem), let current = stack.rootItem?.child as? Output {
+            return current
         }
-        
-        let output: Output
-        
-        if let input = inputItem?.input {
-            output = self[keyPath: route].closure(self)(input)
-        } else {
-            output = self[keyPath: route].closure(self)(() as! Input)
-        }
-        
-        stack.root.item = NavigationRootItem(
+
+        let output = self[keyPath: route].closure(self)(input)
+
+        stack.rootItem = NavigationRootItem(
             keyPath: route.hashValue,
-            input: inputItem?.input,
+            input: input,
             child: output
         )
-        
+
+        _ = CoordinatorPath.navigationStack(of: output)
+
         return output
     }
-    
+
+    /// Replaces the root with `route`, unless `route` with the same input is the root already.
     @discardableResult private func _root<Output: View, Input>(
         _ route: KeyPath<Self, Transition<Self, RootSwitch, Input, Output>>,
-        inputItem: (input: Input, comparator: (Input, Input) -> Bool)?
+        input: Input,
+        comparator: ((Input, Input) -> Bool)?
     ) -> Self {
-        if stack.root.item.keyPath == route.hashValue {
-            if let inputItem = inputItem {
-                if inputItem.comparator(inputItem.input, stack.root.item.input! as! Input) == true {
-                    return self
-                }
-            } else {
-                return self
-            }
+        let inputItem = comparator.map { (input: input, comparator: $0) }
+        if _isRoot(route, inputItem: inputItem) {
+            return self
         }
-        
-        let output: Output
-        
-        if let input = inputItem?.input {
-            output = self[keyPath: route].closure(self)(input)
-        } else {
-            output = self[keyPath: route].closure(self)(() as! Input)
-        }
-        
-        stack.root.item = NavigationRootItem(
+
+        let output = self[keyPath: route].closure(self)(input)
+
+        stack.rootItem = NavigationRootItem(
             keyPath: route.hashValue,
-            input: inputItem?.input,
+            input: input,
             child: AnyView(output)
         )
-        
+
         return self
     }
-    
+
     @discardableResult func root<Output: Coordinatable>(
         _ route: KeyPath<Self, Transition<Self, RootSwitch, Void, Output>>
     ) -> Output {
-        self._root(route, inputItem: nil)
+        self._root(route, input: (), comparator: nil)
     }
-    
+
     @discardableResult func root<Output: View>(
         _ route: KeyPath<Self, Transition<Self, RootSwitch, Void, Output>>
     ) -> Self {
-        self._root(route, inputItem: nil)
+        self._root(route, input: (), comparator: nil)
     }
-    
-    @discardableResult func root<Input, Output: Coordinatable>(
-        _ route: KeyPath<Self, Transition<Self, RootSwitch, Input, Output>>
-    ) -> Output {
-        self._root(route, inputItem: nil)
-    }
-    
-    @discardableResult func root<Input, Output: View>(
-        _ route: KeyPath<Self, Transition<Self, RootSwitch, Input, Output>>
-    ) -> Self {
-        self._root(route, inputItem: nil)
-    }
-    
+
     @discardableResult func root<Input, Output: Coordinatable>(
         _ route: KeyPath<Self, Transition<Self, RootSwitch, Input, Output>>,
         _ input: Input,
         comparator: @escaping (Input, Input) -> Bool
     ) -> Output {
-        self._root(route, inputItem: (input, comparator))
+        self._root(route, input: input, comparator: comparator)
     }
-    
+
     @discardableResult func root<Input, Output: View>(
         _ route: KeyPath<Self, Transition<Self, RootSwitch, Input, Output>>,
         _ input: Input,
         comparator: @escaping (Input, Input) -> Bool
     ) -> Self {
-        self._root(route, inputItem: (input, comparator))
+        self._root(route, input: input, comparator: comparator)
     }
-    
+
     @discardableResult func root<Input: Equatable, Output: Coordinatable>(
         _ route: KeyPath<Self, Transition<Self, RootSwitch, Input, Output>>,
         _ input: Input
     ) -> Output {
-        self._root(route, inputItem: (input, { $0 == $1 }))
+        self._root(route, input: input, comparator: { $0 == $1 })
     }
-    
+
     @discardableResult func root<Input: Equatable, Output: View>(
         _ route: KeyPath<Self, Transition<Self, RootSwitch, Input, Output>>,
         _ input: Input
     ) -> Self {
-        self._root(route, inputItem: (input, { $0 == $1 }))
+        self._root(route, input: input, comparator: { $0 == $1 })
     }
-    
-    private func _isRoot<Input, Output: Coordinatable>(
+
+    private func _isRoot<Input, Output>(
         _ route: KeyPath<Self, Transition<Self, RootSwitch, Input, Output>>,
         inputItem: (input: Input, comparator: (Input, Input) -> Bool)?
     ) -> Bool {
-        guard stack.root.item.keyPath == route.hashValue else {
+        prepareStack()
+        guard let rootItem = stack.rootItem, rootItem.keyPath == route.hashValue else {
             return false
         }
-        
+
         guard let inputItem = inputItem else {
             return true
         }
 
-        guard let compareTo = stack.root.item.input else {
-            fatalError()
-        }
-
-        return inputItem.comparator(compareTo as! Input, inputItem.input)
-    }
-    
-    private func _isRoot<Input, Output: View>(
-        _ route: KeyPath<Self, Transition<Self, RootSwitch, Input, Output>>,
-        inputItem: (input: Input, comparator: (Input, Input) -> Bool)?
-    ) -> Bool {
-        guard stack.root.item.keyPath == route.hashValue else {
+        guard let compareTo = Self.storedInput(rootItem.input, as: Input.self) else {
             return false
         }
-        
-        guard let inputItem = inputItem else {
-            return true
-        }
 
-        guard let compareTo = stack.root.item.input else {
-            fatalError()
-        }
-
-        return inputItem.comparator(compareTo as! Input, inputItem.input)
+        return inputItem.comparator(compareTo, inputItem.input)
     }
-    
+
     private func _hasRoot<Input, Output: Coordinatable>(
         _ route: KeyPath<Self, Transition<Self, RootSwitch, Input, Output>>,
         inputItem: (input: Input, comparator: (Input, Input) -> Bool)?
     ) -> Output? {
-        return _isRoot(route, inputItem: inputItem) ? (stack.root.item.child as! Output) : nil
+        guard _isRoot(route, inputItem: inputItem) else {
+            return nil
+        }
+
+        return stack.rootItem?.child as? Output
     }
     
     @discardableResult func isRoot<Output: Coordinatable>(

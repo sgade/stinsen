@@ -4,7 +4,7 @@ import SwiftUI
 import Stinsen
 
 final class MainCoordinator: NavigationCoordinatable {
-    var stack: Stinsen.NavigationStack<MainCoordinator>
+    var stack: CoordinatorStack<MainCoordinator>
 
     @Root var unauthenticated = makeUnauthenticated
     @Root var authenticated = makeAuthenticated
@@ -65,9 +65,9 @@ final class MainCoordinator: NavigationCoordinatable {
     init() {
         switch AuthenticationService.shared.status {
         case .authenticated(let user):
-            stack = NavigationStack(initial: \MainCoordinator.authenticated, user)
+            stack = CoordinatorStack(initial: \MainCoordinator.authenticated, user)
         case .unauthenticated:
-            stack = NavigationStack(initial: \MainCoordinator.unauthenticated)
+            stack = CoordinatorStack(initial: \MainCoordinator.unauthenticated)
         }
     }
 }

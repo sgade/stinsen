@@ -37,11 +37,13 @@ struct TestbedEnvironmentObjectScreen: View {
                     }
                 }
                  */
-                RoundedButton("Dismiss me!") {
+                RoundedButton("Dismiss coordinator") {
                     testbed.dismissCoordinator {
                         print("bye!")
                     }
                 }
+                // The root coordinator of a tab has no presenter, so it cannot be dismissed.
+                .disabled(!testbed.canDismissCoordinator)
             }
         }
     }

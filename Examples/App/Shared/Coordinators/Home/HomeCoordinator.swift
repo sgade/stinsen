@@ -4,7 +4,7 @@ import SwiftUI
 import Stinsen
 
 final class HomeCoordinator: NavigationCoordinatable {    
-    let stack = NavigationStack(initial: \HomeCoordinator.start)    
+    let stack = CoordinatorStack(initial: \HomeCoordinator.start)    
 
     @Root var start = makeStart
     

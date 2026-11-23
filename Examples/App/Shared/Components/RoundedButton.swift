@@ -11,6 +11,8 @@ struct RoundedButton: View {
     let title: String
     var action: () -> Void
     let style: Style
+
+    @Environment(\.isEnabled) private var isEnabled
     
     var body: some View {
         #if targetEnvironment(macCatalyst)
@@ -51,6 +53,7 @@ struct RoundedButton: View {
                 .foregroundColor(backgroundColor)
             )
             .frame(maxWidth: 300, minHeight: 50)
+            .opacity(isEnabled ? 1 : 0.4)
         })
     }
     
